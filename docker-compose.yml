@@ -7,6 +7,7 @@ services:
         working_dir: /var/www/kedr-time.ru
         volumes:
             - .:/var/www/kedr-time.ru
+        user: "${UID}:${GID}"
         depends_on:
             - postgres
             - redis
@@ -52,6 +53,7 @@ services:
         volumes:
             - .:/var/www/kedr-time.ru
         command: sh -c "npm install && npm run dev"
+        user: "${UID}:${GID}"
         ports:
             - "5173:5173"
         networks:
