@@ -7,12 +7,17 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class ExcelExportService
 {
+    /**
+     * @param array $rows
+     * @param string $filename
+     * @return string
+     */
     public function export(array $rows, string $filename): string
     {
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
-        $sheet->fromArray($rows, null, 'A1');
+        $sheet->fromArray($rows);
 
         $lastCol = $sheet->getHighestColumn();
         $sheet->getStyle("A1:{$lastCol}1")->getFont()->setBold(true);
@@ -24,22 +29,22 @@ class ExcelExportService
 
         $rowCount = count($rows);
         for ($i = 2; $i <= $rowCount; $i++) {
-            $deviation = $sheet->getCell("H{$i}")->getValue(); // 👈 теперь читаем колонку H
+            $deviation = $sheet->getCell("H$i")->getValue();
 
-            $this->colorCell($sheet, "C{$i}",
+            $this->colorCell($sheet, "C$i",
                 $deviation && str_contains($deviation, 'опоздал')
             );
 
-            $this->colorCell($sheet, "D{$i}",
+            $this->colorCell($sheet, "D$i",
                 $deviation && str_contains($deviation, 'слинял')
             );
 
-            $this->colorCell($sheet, "E{$i}",
+            $this->colorCell($sheet, "E$i",
                 $deviation && (str_contains($deviation, 'откосил') || str_contains($deviation, 'недоработал'))
             );
 
-            $diff = $sheet->getCell("F{$i}")->getValue();
-            $this->colorCell($sheet, "F{$i}", str_starts_with($diff, '-'));
+            $diff = $sheet->getCell("F$i")->getValue();
+            $this->colorCell($sheet, "F$i", str_starts_with($diff, '-'));
         }
 
         $writer = new Xlsx($spreadsheet);
@@ -54,6 +59,11 @@ class ExcelExportService
         return $path;
     }
 
+    /**
+     * @param array $rows
+     * @param string $filename
+     * @return string
+     */
     public function exportSimple(array $rows, string $filename): string
     {
         $spreadsheet = new Spreadsheet();
@@ -80,6 +90,12 @@ class ExcelExportService
     }
 
 
+    /**
+     * @param $sheet
+     * @param string $cell
+     * @param bool $isDeviation
+     * @return void
+     */
     private function colorCell($sheet, string $cell, bool $isDeviation): void
     {
         $sheet->getStyle($cell)->getFont()->getColor()->setARGB(
@@ -87,6 +103,10 @@ class ExcelExportService
         );
     }
 
+    /**
+     * @param string|null $time
+     * @return int
+     */
     private static function toSeconds(?string $time): int
     {
         if (!$time || !preg_match('/^(\d+):(\d+):(\d+)$/', $time, $m)) {
@@ -95,6 +115,11 @@ class ExcelExportService
         return ($m[1] * 3600 + $m[2] * 60 + $m[3]);
     }
 
+    /**
+     * @param string|null $worked
+     * @param float $planHours
+     * @return string
+     */
     public static function deviationTime(?string $worked, float $planHours): string
     {
         $workedSecs = self::toSeconds($worked);
@@ -106,6 +131,10 @@ class ExcelExportService
         return $sign . gmdate('H:i:s', abs($diffSecs));
     }
 
+    /**
+     * @param float|null $hours
+     * @return string|null
+     */
     public static function formatHours(?float $hours): ?string
     {
         if ($hours === null) {

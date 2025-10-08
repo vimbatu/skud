@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Throwable;
 
 class SummaryReportExportService
 {
@@ -11,6 +13,10 @@ class SummaryReportExportService
         private readonly SummaryReportService $summary
     ) {}
 
+    /**
+     * @param Request $request
+     * @return array
+     */
     public function prepare(Request $request): array
     {
         $rows = [[
@@ -45,15 +51,19 @@ class SummaryReportExportService
         return [$rows, $this->makeFileName($request)];
     }
 
+    /**
+     * @param Request $request
+     * @return string
+     */
     private function makeFileName(Request $request): string
     {
         $parts = ['skud_summary'];
 
         if ($request->filled('date')) {
             try {
-                $dt = \Carbon\Carbon::createFromLocaleFormat('F Y', 'ru', $request->get('date'));
+                $dt = Carbon::createFromLocaleFormat('F Y', 'ru', $request->get('date'));
                 $parts[] = $dt->format('m.Y');
-            } catch (\Throwable) {
+            } catch (Throwable) {
                 $parts[] = Str::slug($request->get('date'), '_');
             }
         }

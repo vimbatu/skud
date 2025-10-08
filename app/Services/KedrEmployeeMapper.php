@@ -4,6 +4,10 @@ namespace App\Services;
 
 class KedrEmployeeMapper
 {
+    /**
+     * @param array $data
+     * @return array
+     */
     public function map(array $data): array
     {
         return [

@@ -43,8 +43,8 @@ class AttendanceService
 
         $baseDate = $date ?? now()->toDateString();
 
-        $in  = Carbon::createFromFormat('Y-m-d H:i:s', $baseDate.' '.$timeIn);
-        $out = Carbon::createFromFormat('Y-m-d H:i:s', $baseDate.' '.$timeOut);
+        $in = Carbon::createFromFormat('Y-m-d H:i:s', $baseDate . ' ' . $timeIn);
+        $out = Carbon::createFromFormat('Y-m-d H:i:s', $baseDate . ' ' . $timeOut);
 
         $seconds = $in->diffInSeconds($out);
         $seconds = max($seconds - 3600, 0);

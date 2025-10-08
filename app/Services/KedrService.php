@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Exceptions\KedrApiException;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -47,6 +48,14 @@ class KedrService
         return $this->request(self::EMPLOYEES_URL, [], 'items');
     }
 
+    /**
+     * @param string $endpoint
+     * @param array $params
+     * @param string $resultKey
+     * @return array
+     * @throws KedrApiException
+     * @throws ConnectionException
+     */
     private function request(string $endpoint, array $params, string $resultKey): array
     {
         $query = array_filter(array_merge(['apiKey' => $this->apiKey], $params));
@@ -94,6 +103,6 @@ class KedrService
      */
     private function logError(string $method, array $context = []): void
     {
-        Log::error("Kedr API {$method} failed", $context);
+        Log::error("Kedr API $method failed", $context);
     }
 }

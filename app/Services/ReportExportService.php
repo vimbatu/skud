@@ -9,6 +9,10 @@ use Illuminate\Http\Request;
 
 class ReportExportService
 {
+    /**
+     * @param Request $request
+     * @return array
+     */
     public function prepare(Request $request): array
     {
         $rows = [[
@@ -50,6 +54,10 @@ class ReportExportService
         return [$rows, $this->makeFileName($request)];
     }
 
+    /**
+     * @param Request $request
+     * @return string
+     */
     private function makeFileName(Request $request): string
     {
         $parts = ['skud'];

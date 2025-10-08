@@ -7,6 +7,10 @@ use Carbon\Carbon;
 
 class KedrAttendanceMapper
 {
+    /**
+     * @param array $data
+     * @return array
+     */
     public function map(array $data): array
     {
         $name = ($data['fam'] ?? '') . ' ' . ($data['name'] ?? '');

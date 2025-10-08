@@ -9,6 +9,13 @@ use Throwable;
 
 class SummaryReportService
 {
+    /**
+     * @param string|null $employee
+     * @param string|null $department
+     * @param string|null $date
+     * @param bool $onlyDeviations
+     * @return Collection
+     */
     public function getSummary(
         ?string $employee = null,
         ?string $department = null,
@@ -28,6 +35,12 @@ class SummaryReportService
             : $summary;
     }
 
+    /**
+     * @param string|null $employee
+     * @param string|null $department
+     * @param string|null $date
+     * @return Collection
+     */
     protected function loadAttendances(?string $employee, ?string $department, ?string $date): Collection
     {
         return Attendance::query()
@@ -50,6 +63,10 @@ class SummaryReportService
             ->get();
     }
 
+    /**
+     * @param Collection $group
+     * @return array
+     */
     protected function buildRow(Collection $group): array
     {
         $first = $group->first();
@@ -70,6 +87,10 @@ class SummaryReportService
         ];
     }
 
+    /**
+     * @param $attendance
+     * @return float
+     */
     protected function calcPlanHours($attendance): float
     {
         $monthStart = $attendance->date->copy()->startOfMonth()->toDateString();
@@ -83,6 +104,10 @@ class SummaryReportService
         );
     }
 
+    /**
+     * @param Collection $group
+     * @return float
+     */
     protected function calcFactHours(Collection $group): float
     {
         return round($group->sum(fn($a) => (float)$a->worked_hours), 1);
