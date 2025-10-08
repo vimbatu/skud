@@ -43,7 +43,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/reports/summary', [Controllers\ReportController::class, 'summary'])->name('reports.summary');
     Route::get('/reports/detail/{id}', [Controllers\ReportController::class, 'detail'])->name('reports.detail');
     Route::get('/reports/export', [Controllers\ReportController::class, 'export'])->name('reports.export');
-//    Route::post('/upload/excel', [Controllers\UploadController::class, 'uploadExcel'])->name('upload.excel');
+    Route::get('/reports/summary/export', [Controllers\ReportController::class, 'exportSummary'])
+        ->name('reports.summary.export');
 
     Route::get('employees', [Controllers\EmployeeController::class, 'index'])->name('employees.index');
 

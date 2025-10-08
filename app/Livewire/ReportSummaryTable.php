@@ -2,8 +2,7 @@
 
 namespace App\Livewire;
 
-use App\Models\Attendance;
-use Illuminate\Http\Request;
+use App\Services\SummaryReportService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -11,22 +10,13 @@ class ReportSummaryTable extends Component
 {
     use WithPagination;
 
-    public $sortBy = 'date';
+    public $sortBy = 'month_year';
     public $sortDirection = 'desc';
-    public $perPage = 300;
-
-    public $from;
-    public $to;
+    public $perPage = 100;
     public $employee;
+    public $department;
+    public $date;
     public $only_deviations = false;
-
-//    protected $queryString = [
-//        'from',
-//        'to',
-//        'employee',
-//        'only_deviations' => ['except' => false],
-//        'page',
-//    ];
 
     public function sort(string $column): void
     {
@@ -38,25 +28,38 @@ class ReportSummaryTable extends Component
         }
     }
 
-    public function render()
+    public function render(SummaryReportService $service)
     {
-        $records = Attendance::byDateRange($this->from, $this->to)
-            ->byEmployee($this->employee)
-            ->when($this->only_deviations, fn($q) => $q->withDeviations());
+        $onlyDeviations = (bool)$this->only_deviations;
 
-        if ($this->sortDirection === 'asc') {
-            $records->orderByRaw("CASE WHEN {$this->sortBy} IS NULL THEN 0 ELSE 1 END ASC")
-                ->orderByColumn($this->sortBy, 'asc');
-        } else {
-            $records->orderByRaw("CASE WHEN {$this->sortBy} IS NULL THEN 1 ELSE 0 END ASC")
-                ->orderByColumn($this->sortBy, 'desc');
+        $collection = $service->getSummary(
+            $this->employee,
+            $this->department,
+            $this->date,
+            $onlyDeviations
+        );
+
+        if ($onlyDeviations) {
+            $collection = $collection->where('has_deviation', true);
         }
 
-        $attendances = $records
-            ->paginate($this->perPage);
+        $sortField = match ($this->sortBy) {
+            'month_year' => 'month_key',
+            'employee' => 'employee_name',
+            default => $this->sortBy,
+        };
 
-        return view('livewire.report-summary-table', [
-            'attendances' => $attendances,
-        ]);
+        $collection = $collection->sortBy([[$sortField, $this->sortDirection]]);
+
+        $page = $this->getPage();
+        $items = $collection->forPage($page, $this->perPage)->values();
+        $paginator = new \Illuminate\Pagination\LengthAwarePaginator(
+            $items,
+            $collection->count(),
+            $this->perPage,
+            $page
+        );
+
+        return view('livewire.report-summary-table', ['attendances' => $paginator]);
     }
 }

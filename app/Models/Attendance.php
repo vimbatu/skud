@@ -54,6 +54,15 @@ class Attendance extends Model
         });
     }
 
+    public function scopeByDepartment(Builder $q, ?string $query = null)
+    {
+        return $q->when($query, function ($q) use ($query) {
+            return $q->whereHas('employee.department', function ($q) use ($query) {
+                $q->where('name', 'like', "%$query%");
+            });
+        });
+    }
+
     public function getTimeInColorAttribute(): string
     {
         return str_contains($this->deviation, 'опоздал') ? '!text-red-600' : '!text-green-600';

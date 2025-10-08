@@ -8,7 +8,7 @@
 
         <div class="flex items-center gap-2">
             <flux:button
-                href="{{ route('reports.export', request()->query()) }}"
+                href="{{ route('reports.summary.export', request()->query()) }}"
                 variant="primary"
                 size="sm"
                 icon="arrow-down-tray">
@@ -17,12 +17,12 @@
         </div>
     </div>
 
-    @include('components.filter-form')
+    @include('components.filter-form-summary')
 
     <livewire:report-summary-table
-        :from="request('from')"
-        :to="request('to')"
         :employee="request('employee')"
+        :department="request('department')"
+        :date="request('date')"
         :only_deviations="request('only_deviations')" />
 
 </x-layouts.app>

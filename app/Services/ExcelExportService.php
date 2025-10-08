@@ -12,40 +12,32 @@ class ExcelExportService
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
-        // заливаем данные
         $sheet->fromArray($rows, null, 'A1');
 
-        // стили для заголовка
         $lastCol = $sheet->getHighestColumn();
         $sheet->getStyle("A1:{$lastCol}1")->getFont()->setBold(true);
         $sheet->getStyle("A1:{$lastCol}1")->getAlignment()->setHorizontal('center');
 
-        // автоширина колонок
         foreach (range('A', $lastCol) as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
-        // колонки: C = Приход, D = Уход, E = Часы (факт), G = Отклонение
         $rowCount = count($rows);
         for ($i = 2; $i <= $rowCount; $i++) {
             $deviation = $sheet->getCell("H{$i}")->getValue(); // 👈 теперь читаем колонку H
 
-            // Опоздал
             $this->colorCell($sheet, "C{$i}",
                 $deviation && str_contains($deviation, 'опоздал')
             );
 
-            // Слинял
             $this->colorCell($sheet, "D{$i}",
                 $deviation && str_contains($deviation, 'слинял')
             );
 
-            // Отработал мало
             $this->colorCell($sheet, "E{$i}",
                 $deviation && (str_contains($deviation, 'откосил') || str_contains($deviation, 'недоработал'))
             );
 
-            // Подсветка отклонения по времени (F)
             $diff = $sheet->getCell("F{$i}")->getValue();
             $this->colorCell($sheet, "F{$i}", str_starts_with($diff, '-'));
         }
@@ -61,6 +53,32 @@ class ExcelExportService
 
         return $path;
     }
+
+    public function exportSimple(array $rows, string $filename): string
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Сводная таблица');
+
+        $sheet->fromArray($rows);
+        $lastCol = $sheet->getHighestColumn();
+        $sheet->getStyle("A1:{$lastCol}1")->getFont()->setBold(true);
+        $sheet->getStyle("A1:{$lastCol}1")->getAlignment()->setHorizontal('center');
+
+        foreach (range('A', $lastCol) as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $path = storage_path('app/public/' . $filename);
+        if (!is_dir(dirname($path))) {
+            mkdir(dirname($path), 0755, true);
+        }
+        $writer->save($path);
+
+        return $path;
+    }
+
 
     private function colorCell($sheet, string $cell, bool $isDeviation): void
     {
