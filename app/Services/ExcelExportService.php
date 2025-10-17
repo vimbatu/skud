@@ -32,15 +32,15 @@ class ExcelExportService
             $deviation = $sheet->getCell("H$i")->getValue();
 
             $this->colorCell($sheet, "C$i",
-                $deviation && str_contains($deviation, 'опоздал')
+                $deviation && str_contains($deviation, 'Опоздание')
             );
 
             $this->colorCell($sheet, "D$i",
-                $deviation && str_contains($deviation, 'слинял')
+                $deviation && str_contains($deviation, 'Ранний уход')
             );
 
             $this->colorCell($sheet, "E$i",
-                $deviation && (str_contains($deviation, 'откосил') || str_contains($deviation, 'недоработал'))
+                $deviation && (str_contains($deviation, 'Без отметки') || str_contains($deviation, 'Неполный день'))
             );
 
             $diff = $sheet->getCell("F$i")->getValue();

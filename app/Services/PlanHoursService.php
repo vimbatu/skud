@@ -63,9 +63,22 @@ class PlanHoursService
             }
 
             foreach ($item['details'] as $detail) {
+                $rawHours = $detail['hours'] ?? null;
+
+                $hours = trim((string) $rawHours);
+
+                if ($hours === '' || !is_numeric($hours) || $hours < 0) {
+                    $hours = 8;
+                }
+
                 $employee->planHours()->updateOrCreate(
-                    ['employee_id' => $employee->id, 'date' => $detail['date']],
-                    ['hours' => $detail['hours'] ?? 8]
+                    [
+                        'employee_id' => $employee->id,
+                        'date' => $detail['date'],
+                    ],
+                    [
+                        'hours' => (float) $hours,
+                    ]
                 );
             }
         }

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Employee;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -23,10 +24,10 @@ class SummaryReportExportService
             'Месяц / год',
             'Подразделение',
             'Сотрудник',
+            'Часы (план)',
             'Часы (факт)',
-            'План',
-            'Средний приход',
-            'Средний уход',
+            'Среднее время прихода',
+            'Среднее время ухода',
         ]];
 
         $collection = $this->summary->getSummary(
@@ -41,8 +42,8 @@ class SummaryReportExportService
                 $r['month_year'],
                 $r['department'],
                 $r['employee_name'],
-                ExcelExportService::formatHours($r['fact_hours']),
                 ExcelExportService::formatHours($r['plan_hours']),
+                ExcelExportService::formatHours($r['fact_hours']),
                 $r['avg_in'],
                 $r['avg_out'],
             ];
@@ -59,6 +60,19 @@ class SummaryReportExportService
     {
         $parts = ['skud_summary'];
 
+        if ($request->filled('employee')) {
+            $parts[] = Str::slug(
+                Employee::where('name', 'like', '%' . $request->employee . '%')
+                    ->first()
+                    ->name,
+                '_'
+            );
+        }
+
+        if ($request->filled('department')) {
+            $parts[] = 'dep_' . Str::slug($request->get('department'), '_');
+        }
+
         if ($request->filled('date')) {
             try {
                 $dt = Carbon::createFromLocaleFormat('F Y', 'ru', $request->get('date'));
@@ -66,14 +80,6 @@ class SummaryReportExportService
             } catch (Throwable) {
                 $parts[] = Str::slug($request->get('date'), '_');
             }
-        }
-
-        if ($request->filled('department')) {
-            $parts[] = 'dep_' . Str::slug($request->get('department'), '_');
-        }
-
-        if ($request->filled('employee')) {
-            $parts[] = Str::slug($request->get('employee'), '_');
         }
 
         if ($request->boolean('only_deviations')) {

@@ -24,7 +24,7 @@ class EmployeeTable extends Component
         $this->departments = Department::orderBy('name')->get();
         $this->employees = Employee::with([
                 'department',
-                'planHours' => fn($q) => $q->byDateRange(now()->startOfMonth(), now()->endOfMonth())
+                'planHours' => fn($q) => $q->byDateRange(now()->subMonth()->startOfMonth(), now()->subMonth()->endOfMonth())
             ])
             ->orderBy('name')
             ->get();

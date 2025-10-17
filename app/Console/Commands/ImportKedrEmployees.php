@@ -13,7 +13,12 @@ class ImportKedrEmployees extends Command
     protected $signature = 'kedr:import-employees';
     protected $description = 'Import employees from Kedr.Cloud';
 
-    public function handle(KedrService $service, KedrEmployeeMapper $mapper)
+    /**
+     * @param KedrService $service
+     * @param KedrEmployeeMapper $mapper
+     * @return int
+     */
+    public function handle(KedrService $service, KedrEmployeeMapper $mapper): int
     {
         try {
             $employees = $service->getEmployeesList();
@@ -29,9 +34,11 @@ class ImportKedrEmployees extends Command
                 Employee::updateOrCreate($mapped);
             }
         } catch (KedrApiException $e) {
-            $this->error($e->getMessage());
+            $this->error('Ошибка импорта: ' . $e->getMessage());
+            return self::FAILURE;
         }
 
         $this->info('Import finished');
+        return self::SUCCESS;
     }
 }

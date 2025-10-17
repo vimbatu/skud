@@ -2,7 +2,7 @@
 
     {{-- Поля ввода --}}
     <div class="flex flex-wrap items-center gap-2">
-        <flux:input wire:model.defer="name" placeholder="ФИО" class="w-48" />
+        <flux:input wire:model.defer="name" placeholder="Фамилия Имя" class="w-48" />
 
         <flux:select wire:model.defer="department_id" class="w-48">
             <option value="">Без подразделения</option>
@@ -11,7 +11,6 @@
             @endforeach
         </flux:select>
 
-        <flux:input wire:model.defer="plan_hours" type="number" min="0" placeholder="План. часы" class="w-32" />
         <flux:input wire:model.defer="position" placeholder="Должность" class="w-48" />
     </div>
 
@@ -22,15 +21,17 @@
         </flux:button>
 
         <div class="flex items-center gap-2">
-            <flux:select wire:model="month" class="w-48">
-                @for($i = 1; $i <= 12; $i++)
-                    <option value="{{ $i }}">
-                        {{ Str::ucfirst(\Carbon\Carbon::create()->month($i)->locale('ru')->translatedFormat('F')) }}
-                    </option>
-                @endfor
-            </flux:select>
+            <div class="w-[10rem] shrink-0">
+                <flux:select wire:model="month">
+                    @for($i = 1; $i <= 12; $i++)
+                        <option value="{{ $i }}">
+                            {{ Str::ucfirst(\Carbon\Carbon::create()->month($i)->locale('ru')->translatedFormat('F')) }}
+                        </option>
+                    @endfor
+                </flux:select>
+            </div>
 
-            <flux:select wire:model="year" class="w-48">
+            <flux:select wire:model="year">
                 @for($i = 2024; $i <= 2028; $i++)
                     <option value="{{ $i }}">{{ $i }}</option>
                 @endfor

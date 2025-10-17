@@ -8,4 +8,8 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('kedr:import')->dailyAt('01:00');
+Schedule::command('kedr:import-employees')
+    ->dailyAt('01:00')
+    ->onSuccess(fn() => Artisan::call('kedr:import'));
+
+Schedule::command('plan:import')->monthlyOn(7);

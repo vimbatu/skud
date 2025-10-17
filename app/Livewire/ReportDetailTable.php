@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\PlanHour;
 use App\Services\AttendanceService;
 use Carbon\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -35,28 +36,69 @@ class ReportDetailTable extends Component
 
     public function render()
     {
+        $employee = Employee::find($this->employeeId);
+        if (!$employee) {
+            abort(404, 'Сотрудник не найден');
+        }
+
+        $from = Carbon::parse($this->from ?? now()->startOfMonth());
+        $to   = Carbon::parse($this->to ?? now()->endOfMonth());
+
+        $allDates = collect();
+        for ($date = $from->copy(); $date->lte($to); $date->addDay()) {
+            if (!$date->isWeekend()) {
+                $allDates->push($date->copy());
+            }
+        }
+
         $records = Attendance::byEmployee($this->employeeId)
-            ->byDateRange($this->from, $this->to)
+            ->byDateRange($from, $to)
             ->when($this->only_deviations, fn($q) => $q->withDeviations())
-            ->with([
-                'employee.planHours' => fn($p) => $p->byDateRange($this->from, $this->to)
-            ])
-            ->orderBy($this->sortBy, $this->sortDirection)
-            ->paginate(50);
+            ->with(['employee.planHours' => fn($p) => $p->byDateRange($from, $to)])
+            ->get()
+            ->keyBy(fn($r) => $r->date->toDateString());
 
-        $all = clone $records;
+        $full = $allDates->map(function ($date) use ($records, $employee) {
+            $record = $records->get($date->toDateString());
 
-        $avgTimeIn = $all->whereNotNull('time_in')->avg(fn($r) => strtotime($r->time_in));
-        $avgTimeOut = $all->whereNotNull('time_out')->avg(fn($r) => strtotime($r->time_out));
-        $avgWorked = $all->whereNotNull('worked_hours')->avg(fn($r) => strtotime($r->worked_hours));
+            return $record ?: new Attendance([
+                'employee_id'  => $employee->id,
+                'date'         => $date->copy(),
+                'time_in'      => null,
+                'time_out'     => null,
+                'worked_hours' => '00:00:00',
+                'plan_hours'   => $employee->planHours()->where('date', $date->toDateString())->value('hours') ?? null,
+                'deviation'    => 'Без отметки',
+                'absence_type' => null,
+            ]);
+        });
 
-        $avgTimeIn = $avgTimeIn ? date('H:i:s', (int)$avgTimeIn) : null;
+        $page = $this->getPage();
+        $perPage = 50;
+        $paginated = new LengthAwarePaginator(
+            $full->forPage($page, $perPage)->values(),
+            $full->count(),
+            $perPage,
+            $page
+        );
+
+        $avgTimeIn  = $records->whereNotNull('time_in')->avg(fn($r) => strtotime($r->time_in));
+        $avgTimeOut = $records->whereNotNull('time_out')->avg(fn($r) => strtotime($r->time_out));
+        $avgWorked  = $records->whereNotNull('worked_hours')->avg(fn($r) => strtotime($r->worked_hours));
+
+        $avgTimeIn  = $avgTimeIn ? date('H:i:s', (int)$avgTimeIn) : null;
         $avgTimeOut = $avgTimeOut ? date('H:i:s', (int)$avgTimeOut) : null;
-        $avgWorked = $avgWorked ? date('H:i:s', (int)$avgWorked) : null;
+        $avgWorked  = $avgWorked ? date('H:i:s', (int)$avgWorked) : null;
 
-        $absences = AbsenceType::all()->pluck('name');
+        $absences = AbsenceType::pluck('name');
 
-        return view('livewire.report-detail-table', compact('records', 'avgTimeIn', 'avgTimeOut', 'avgWorked', 'absences'));
+        return view('livewire.report-detail-table', [
+            'records'    => $paginated,
+            'avgTimeIn'  => $avgTimeIn,
+            'avgTimeOut' => $avgTimeOut,
+            'avgWorked'  => $avgWorked,
+            'absences'   => $absences,
+        ]);
     }
 
     public function updateHours(Attendance $record, string $hours, AttendanceService $service): void

@@ -23,7 +23,7 @@ class EmployeeHeader extends Component
     public function mount(): void
     {
         $this->departments = Department::orderBy('name')->get();
-        $this->month = now()->month;
+        $this->month = now()->subMonth()->month;
         $this->year = now()->year;
     }
 
@@ -32,22 +32,16 @@ class EmployeeHeader extends Component
         $this->validate([
             'name' => 'required|string|max:255',
             'department_id' => 'nullable|exists:departments,id',
-            'plan_hours' => 'required|integer|min:0',
             'position' => 'nullable|string|max:255',
         ]);
 
-        $employee = Employee::create([
+        Employee::create([
             'name' => $this->name,
             'department_id' => $this->department_id,
             'position' => $this->position,
         ]);
 
-        $employee->planHours()->updateOrCreate(
-            ['employee_id' => $employee->id, 'month' => now()->startOfMonth()],
-            ['hours' => $this->plan_hours]
-        );
-
-        $this->reset(['name', 'department_id', 'plan_hours', 'position']);
+        $this->reset(['name', 'department_id', 'position']);
         $this->dispatch('update');
     }
 

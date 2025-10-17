@@ -31,9 +31,12 @@ class Attendance extends Model
         }
     }
 
-    public function scopeByDateRange(Builder $q, $from, $to)
+    public function scopeByDateRange(Builder $q, $from = null, $to = null): Builder
     {
-        return $q->when($from && $to, fn($q) => $q->whereBetween('date', [$from, $to]));
+        return $q
+            ->when($from && $to, fn($q) => $q->whereBetween('date', [$from, $to]))
+            ->when($from && !$to, fn($q) => $q->where('date', '>=', $from))
+            ->when(!$from && $to, fn($q) => $q->where('date', '<=', $to));
     }
 
     public function scopeWithDeviations(Builder $q)
@@ -65,27 +68,40 @@ class Attendance extends Model
 
     public function getTimeInColorAttribute(): string
     {
-        return str_contains($this->deviation, 'опоздал') ? '!text-red-600' : '!text-green-600';
+        return str_contains($this->deviation, 'Опоздание') ? '!text-red-600' : '!text-green-600';
     }
 
     public function getTimeOutColorAttribute(): string
     {
-        return str_contains($this->deviation, 'слинял') ? '!text-red-600' : '!text-green-600';
+        return str_contains($this->deviation, 'Ранний уход') ? '!text-red-600' : '!text-green-600';
     }
 
     public function getWorkedHoursColorAttribute(): string
     {
-        [$h, $m, $s] = explode(':', $this->worked_hours);
-        return (str_contains($this->deviation, 'откосил') || $h < 8)
+        if (empty($this->worked_hours) || !str_contains($this->worked_hours, ':')) {
+            return '!text-gray-400';
+        }
+
+        $parts = explode(':', $this->worked_hours);
+        [$h, $m, $s] = array_pad($parts, 3, 0);
+
+        return (str_contains($this->deviation, 'Без отметки') || $h < 8)
             ? '!text-red-600'
             : '!text-green-600';
     }
 
+
     public function getDeviationColorAttribute(): string
     {
-        [$h, $m, $s] = explode(':', $this->worked_hours);
+        if (empty($this->worked_hours) || !str_contains($this->worked_hours, ':')) {
+            return '!text-gray-400';
+        }
 
-        $plan = $this->employee->planHours()
+        $parts = explode(':', $this->worked_hours);
+        [$h, $m, $s] = array_pad($parts, 3, 0);
+
+        $plan = $this->employee
+            ?->planHours()
             ->where('date', $this->date)
             ->first()
             ?->hours ?? 8;
@@ -94,6 +110,7 @@ class Attendance extends Model
             ? '!text-red-600'
             : '!text-green-600';
     }
+
 
     public function getPlanHoursStyleAttribute()
     {

@@ -8,19 +8,11 @@ use App\Livewire\Settings\TwoFactor;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
-//Route::get('/', function () {
-//    return view('welcome');
-//})->name('home');
-
 Route::get('/', function () {
     return Auth::check()
         ? redirect()->route('reports.summary')
-        : view('welcome');
+        : redirect()->route('login');
 })->name('home');
-
-//Route::view('dashboard', 'dashboard')
-//    ->middleware(['auth', 'verified'])
-//    ->name('dashboard');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('test', [Controllers\TestController::class, 'execute'])->name('test');

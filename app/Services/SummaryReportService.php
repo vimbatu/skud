@@ -49,7 +49,7 @@ class SummaryReportService
             ->byDepartment($department)
             ->when($date, function ($q) use ($date) {
                 try {
-                    $dateParsed = Carbon::createFromLocaleFormat('F Y', 'ru', $date);
+                    $dateParsed = Carbon::createFromFormat('m.Y', $date);
                 } catch (Throwable) {
                     return $q;
                 }

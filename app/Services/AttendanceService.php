@@ -64,19 +64,19 @@ class AttendanceService
     {
         $deviations = [];
 
-        if ($timeIn && strtotime($timeIn) > strtotime('10:00:00')) $deviations[] = 'опоздал';
-        if ($timeOut && strtotime($timeOut) < strtotime('18:00:00')) $deviations[] = 'слинял';
+        if ($timeIn && strtotime($timeIn) > strtotime('10:00:00')) $deviations[] = 'Опоздание';
+        if ($timeOut && strtotime($timeOut) < strtotime('18:00:00')) $deviations[] = 'Ранний уход';
         if ($worked) {
             [$h, $m, $s] = explode(':', $worked);
             if (!empty($plan)) {
                 if ($h < $plan) {
-                    $deviations[] = 'недоработал';
+                    $deviations[] = 'Неполный день';
                 }
             } else {
                 if ($h <= 1) {
-                    $deviations[] = 'откосил';
+                    $deviations[] = 'Без отметки';
                 } elseif ($h < 8) {
-                    $deviations[] = 'недоработал';
+                    $deviations[] = 'Неполный день';
                 }
             }
         }

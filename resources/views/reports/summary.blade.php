@@ -22,7 +22,8 @@
     <livewire:report-summary-table
         :employee="request('employee')"
         :department="request('department')"
-        :date="request('date')"
+        :month="request('month')"
+        :year="request('year')"
         :only_deviations="request('only_deviations')" />
 
 </x-layouts.app>

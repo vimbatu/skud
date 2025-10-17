@@ -15,7 +15,8 @@ class ReportSummaryTable extends Component
     public $perPage = 100;
     public $employee;
     public $department;
-    public $date;
+    public $month;
+    public $year;
     public $only_deviations = false;
 
     public function sort(string $column): void
@@ -35,7 +36,7 @@ class ReportSummaryTable extends Component
         $collection = $service->getSummary(
             $this->employee,
             $this->department,
-            $this->date,
+            $this->month . '.' . $this->year,
             $onlyDeviations
         );
 
