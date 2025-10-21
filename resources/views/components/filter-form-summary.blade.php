@@ -50,7 +50,7 @@
                                 ->pluck('year')
                             as $year
                         )
-                            <option value="{{ $year }}" @selected($year == request('year'))>
+                            <option value="{{ $year }}" @selected($year == (request('year') ?? now()->year))>
                                 {{ $year }}
                             </option>
                         @endforeach

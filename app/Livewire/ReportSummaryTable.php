@@ -36,7 +36,8 @@ class ReportSummaryTable extends Component
         $collection = $service->getSummary(
             $this->employee,
             $this->department,
-            $this->month . '.' . $this->year,
+            $this->month,
+            $this->year,
             $onlyDeviations
         );
 

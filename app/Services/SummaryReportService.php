@@ -12,18 +12,20 @@ class SummaryReportService
     /**
      * @param string|null $employee
      * @param string|null $department
-     * @param string|null $date
+     * @param string|null $month
+     * @param string|null $year
      * @param bool $onlyDeviations
      * @return Collection
      */
     public function getSummary(
         ?string $employee = null,
         ?string $department = null,
-        ?string $date = null,
+        ?string $month = null,
+        ?string $year = null,
         bool    $onlyDeviations = false
     ): Collection
     {
-        $attendances = $this->loadAttendances($employee, $department, $date);
+        $attendances = $this->loadAttendances($employee, $department, $month, $year);
 
         $summary = $attendances
             ->groupBy(fn($a) => $a->employee_id . '-' . $a->date->format('Y-m'))
@@ -38,26 +40,22 @@ class SummaryReportService
     /**
      * @param string|null $employee
      * @param string|null $department
-     * @param string|null $date
+     * @param string|null $month
+     * @param string|null $year
      * @return Collection
      */
-    protected function loadAttendances(?string $employee, ?string $department, ?string $date): Collection
+    protected function loadAttendances(?string $employee, ?string $department, ?string $month, ?string $year): Collection
     {
         return Attendance::query()
             ->with(['employee.department', 'employee.planHours'])
             ->byEmployee($employee)
             ->byDepartment($department)
-            ->when($date, function ($q) use ($date) {
-                try {
-                    $dateParsed = Carbon::createFromFormat('m.Y', $date);
-                } catch (Throwable) {
-                    return $q;
-                }
+            ->when($month && $year, function ($q) use ($month, $year) {
+                $date = Carbon::create($year, $month);
+                $start = $date->copy()->startOfMonth()->startOfDay();
+                $end = $date->copy()->endOfMonth()->endOfDay();
 
-                return $q->byDateRange(
-                    $dateParsed->copy()->startOfMonth()->toDateString(),
-                    $dateParsed->copy()->endOfMonth()->toDateString()
-                );
+                return $q->byDateRange($start, $end);
             })
             ->orderBy('date', 'desc')
             ->get();
@@ -93,12 +91,12 @@ class SummaryReportService
      */
     protected function calcPlanHours($attendance): float
     {
-        $monthStart = $attendance->date->copy()->startOfMonth()->toDateString();
-        $monthEnd = $attendance->date->copy()->endOfMonth()->toDateString();
+        $start = $attendance->date->copy()->startOfMonth()->startOfDay();
+        $end = $attendance->date->copy()->endOfMonth()->endOfDay();
 
         return round(
             $attendance->employee->planHours
-                ->whereBetween('date', [$monthStart, $monthEnd])
+                ->whereBetween('date', [$start, $end])
                 ->sum('hours'),
             1
         );

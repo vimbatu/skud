@@ -69,8 +69,10 @@ class AttendanceService
         if ($worked) {
             [$h, $m, $s] = explode(':', $worked);
             if (!empty($plan)) {
-                if ($h < $plan) {
+                if ($h > 0 && $h < $plan) {
                     $deviations[] = 'Неполный день';
+                } elseif ($h == 0) {
+                    $deviations[] = 'Без отметки';
                 }
             } else {
                 if ($h <= 1) {

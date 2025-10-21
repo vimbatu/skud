@@ -33,7 +33,8 @@ class SummaryReportExportService
         $collection = $this->summary->getSummary(
             $request->get('employee'),
             $request->get('department'),
-            $request->get('date'),
+            $request->get('month'),
+            $request->get('year'),
             $request->boolean('only_deviations')
         );
 
@@ -60,6 +61,10 @@ class SummaryReportExportService
     {
         $parts = ['skud_summary'];
 
+        if ($request->filled('department')) {
+            $parts[] = 'dep_' . Str::slug($request->get('department'), '_');
+        }
+
         if ($request->filled('employee')) {
             $parts[] = Str::slug(
                 Employee::where('name', 'like', '%' . $request->employee . '%')
@@ -69,17 +74,9 @@ class SummaryReportExportService
             );
         }
 
-        if ($request->filled('department')) {
-            $parts[] = 'dep_' . Str::slug($request->get('department'), '_');
-        }
-
-        if ($request->filled('date')) {
-            try {
-                $dt = Carbon::createFromLocaleFormat('F Y', 'ru', $request->get('date'));
-                $parts[] = $dt->format('m.Y');
-            } catch (Throwable) {
-                $parts[] = Str::slug($request->get('date'), '_');
-            }
+        if ($request->filled('month') && $request->filled('year')) {
+            $date = Carbon::create($request->get('year'), $request->get('month'));
+            $parts[] = $date->format('m.Y');
         }
 
         if ($request->boolean('only_deviations')) {
