@@ -10,7 +10,8 @@ Artisan::command('inspire', function () {
 
 Schedule::command('kedr:import-employees')
     ->dailyAt('01:00')
-    ->onSuccess(fn() => Artisan::call('kedr:import'))
-    ->after(fn() => Artisan::call('attendance:fill-missing'));
+    ->onSuccess(fn() => Artisan::call('kedr:import'));
 
-Schedule::command('plan:import')->monthlyOn(7);
+Schedule::command('plan:import')
+    ->monthlyOn(7)
+    ->onSuccess(fn() => Artisan::call('attendance:fill-missing'));

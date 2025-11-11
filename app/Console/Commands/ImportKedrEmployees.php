@@ -31,7 +31,10 @@ class ImportKedrEmployees extends Command
                     || !$mapped['position']
                 ) continue;
 
-                Employee::updateOrCreate($mapped);
+                Employee::updateOrCreate(
+                    ['name' => $mapped['name']],
+                    ['position' => $mapped['position'], 'status' => $mapped['status']]
+                );
             }
         } catch (KedrApiException $e) {
             $this->error('Ошибка импорта: ' . $e->getMessage());

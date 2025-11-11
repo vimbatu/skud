@@ -40,24 +40,33 @@ class ReportDetailTable extends Component
 
         $all = clone $records;
 
-        $avgTimeIn = $all->whereNotNull('time_in')->avg(fn($r) => strtotime($r->time_in));
-        $avgTimeOut = $all->whereNotNull('time_out')->avg(fn($r) => strtotime($r->time_out));
-        $avgWorked = $all->whereNotNull('worked_hours')->avg(fn($r) => strtotime($r->worked_hours));
-
-        $avgTimeIn = $avgTimeIn ? date('H:i:s', (int)$avgTimeIn) : null;
-        $avgTimeOut = $avgTimeOut ? date('H:i:s', (int)$avgTimeOut) : null;
-        $avgWorked = $avgWorked ? date('H:i:s', (int)$avgWorked) : null;
+        $avgTimeIn = $this->avgTime($all, 'time_in');
+        $avgTimeOut = $this->avgTime($all, 'time_out');
+        $avgWorked = $this->avgTime($all, 'worked_hours');
 
         $absences = AbsenceType::all()->pluck('name');
 
         return view('livewire.report-detail-table', compact('records', 'avgTimeIn', 'avgTimeOut', 'avgWorked', 'absences'));
     }
 
+    private function avgTime($collection, string $field): ?string
+    {
+        $seconds = $collection
+            ->whereNotNull($field)
+            ->where($field, '!=', '00:00:00')
+            ->avg(function ($item) use ($field) {
+                [$h, $m, $s] = array_map('intval', explode(':', $item->$field));
+                return $h * 3600 + $m * 60 + $s;
+            });
+
+        return $seconds ? gmdate('H:i:s', (int) round($seconds)) : null;
+    }
+
     public function updateHours(Attendance $record, string $hours, AttendanceService $service): void
     {
         if (empty($hours) && !empty($record->employee->planHours()->where('date', $record->date)->first())) {
             $record->employee->planHours()->where('date', $record->date)->delete();
-        } else {
+        } elseif (!empty($hours)) {
             $record->employee->planHours()->updateOrCreate(
                 ['employee_id' => $record->employee_id, 'date' => $record->date],
                 ['hours' => $hours]
